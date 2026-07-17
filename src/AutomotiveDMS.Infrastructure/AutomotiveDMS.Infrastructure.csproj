@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\AutomotiveDMS.Application\AutomotiveDMS.Application.csproj" />
+    <ProjectReference Include="..\AutomotiveDMS.Domain\AutomotiveDMS.Domain.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

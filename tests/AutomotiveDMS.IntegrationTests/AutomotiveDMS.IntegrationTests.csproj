@@ -18,4 +18,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutomotiveDMS.Infrastructure\AutomotiveDMS.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\AutomotiveDMS.Application\AutomotiveDMS.Application.csproj" />
+    <ProjectReference Include="..\..\src\AutomotiveDMS.Domain\AutomotiveDMS.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
