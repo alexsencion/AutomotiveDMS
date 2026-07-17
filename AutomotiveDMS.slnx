@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AutomotiveDMS.Application/AutomotiveDMS.Application.csproj" />
+    <Project Path="src/AutomotiveDMS.Domain/AutomotiveDMS.Domain.csproj" />
+    <Project Path="src/AutomotiveDMS.Infrastructure/AutomotiveDMS.Infrastructure.csproj" />
+    <Project Path="src/AutomotiveDMS.Web/AutomotiveDMS.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AutomotiveDMS.IntegrationTests/AutomotiveDMS.IntegrationTests.csproj" />
+    <Project Path="tests/AutomotiveDMS.UnitTests/AutomotiveDMS.UnitTests.csproj" />
+  </Folder>
+</Solution>
