@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - "feature/**"
+      - "bugfix/**"
+      - "refactor/**"
+      - "chore/**"
+  pull_request:
+    branches:
+      - develop
+      - main
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+
+  # ── Job 1: Build and Unit Tests ─────────────────────────
+  build-and-test:
+    name: Build & Unit Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore AutomotiveDMS.slnx
+
+      - name: Build
+        run: >
+          dotnet build AutomotiveDMS.slnx
+          --no-restore
+          --configuration Release
+          -warnaserror
+
+      - name: Unit Tests
+        run: >
+          dotnet test tests/AutomotiveDMS.UnitTests/AutomotiveDMS.UnitTests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=unit-test-results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: TestResults/
+
+  # ── Job 2: Integration Tests ─────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "CI_Strong!Pass1"
+          MSSQL_PID: "Developer"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CI_Strong!Pass1' -Q 'SELECT 1' -No"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore AutomotiveDMS.slnx
+
+      - name: Build
+        run: >
+          dotnet build AutomotiveDMS.slnx
+          --no-restore
+          --configuration Release
+
+      - name: Integration Tests
+        env:
+          ConnectionStrings__DefaultConnection: >-
+            Server=localhost,1433;Database=AutomotiveDMS_Test;
+            User Id=sa;Password=CI_Strong!Pass1;
+            TrustServerCertificate=True;
+        run: >
+          dotnet test tests/AutomotiveDMS.IntegrationTests/AutomotiveDMS.IntegrationTests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=integration-test-results.trx"
+          --results-directory ./TestResults
+
+      - name: Upload Integration Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: TestResults/
+
+  # ── Job 3: Docker Build ───────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          tags: automotivedms:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

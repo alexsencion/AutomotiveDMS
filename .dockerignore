@@ -1,0 +1,31 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+
+# Docker files themselves
+docker/
+.dockerignore
+
+# Test results
+**/TestResults/
+**/*.trx
+
+# Local secrets
+**/appsettings.*.local.json
+
+# README and docs
+*.md
+docs/
+
+# GitHub Actions
+.github/

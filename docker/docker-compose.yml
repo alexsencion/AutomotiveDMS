@@ -1,0 +1,56 @@
+name: automotivedms
+
+services:
+
+  # ── SQL Server ───────────────────────────────────────────
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: automotivedms-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_SA_PASSWORD}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q 'SELECT 1' -No"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── Web Application ──────────────────────────────────────
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: automotivedms-app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: >-
+        Server=db,1433;Database=AutomotiveDMS;
+        User Id=sa;Password=${DB_SA_PASSWORD};
+        TrustServerCertificate=True;
+      JwtSettings__Secret: "${JWT_SECRET}"
+      SendGrid__ApiKey: "${SENDGRID_API_KEY}"
+      Twilio__AccountSid: "${TWILIO_ACCOUNT_SID}"
+      Twilio__AuthToken: "${TWILIO_AUTH_TOKEN}"
+      Azure__BlobStorage__ConnectionString: "${AZURE_BLOB_CONNECTION_STRING}"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+    driver: local
