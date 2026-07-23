@@ -1,0 +1,20 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER;Database=YOUR_DB;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True"
+  },
+  "JwtSettings": {
+    "Secret": "your-strong-256-bit-secret-key-here"
+  },
+  "SendGrid": {
+    "ApiKey": "SG.your-actual-sendgrid-key"
+  },
+  "Twilio": {
+    "AccountSid": "ACyour-actual-account-sid",
+    "AuthToken": "your-actual-auth-token"
+  },
+  "Azure": {
+    "BlobStorage": {
+      "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
+    }
+  }
+}
