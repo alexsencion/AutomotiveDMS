@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutomotiveDMS.Application\AutomotiveDMS.Application.csproj" />
+    <ProjectReference Include="..\AutomotiveDMS.Infrastructure\AutomotiveDMS.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

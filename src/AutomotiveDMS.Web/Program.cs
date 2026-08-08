@@ -1,29 +1,81 @@
-var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+using AutomotiveDMS.Application.Extensions;
+using AutomotiveDMS.Infrastructure.Extensions;
+using AutomotiveDMS.Web.Extensions;
+using AutomotiveDMS.Web.Middleware;
+using Serilog;
 
-var app = builder.Build();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+try
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    Log.Information("Starting AutomotiveDMS Web application");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+    {
+        loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext();
+    });
+
+    builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddApplicationServices();
+    builder.Services.AddWebServices(builder.Configuration);
+
+    var app = builder.Build();
+
+    await app.InitialiseDatabaseAsync();
+
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+    else
+    {
+        app.UseExceptionHandler("/Home/Error");
+        app.UseHsts();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseStaticFiles();
+
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.MessageTemplate =
+            "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+    });
+
+    app.UseRouting();
+
+    app.UseSession();
+
+    app.UseAuthentication();
+
+    app.UseAuthorization();
+
+    app.UseMiddleware<AuditMiddleware>();
+
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+
+    Log.Information("AutomotiveDMS Web applicaton started successfully");
+
+    await app.RunAsync();
 }
-
-app.UseHttpsRedirection();
-app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapStaticAssets();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
-
-app.Run();
+catch(Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "AutomotiveDMS applicaton terminated unexpectedly");
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
