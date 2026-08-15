@@ -53,7 +53,8 @@ namespace AutomotiveDMS.Infrastructure.Extensions
                 options.SignIn.RequireConfirmedEmail = false;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddSignInManager<CustomSignInManager>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IVehicleRepository, VehicleRepository>();
