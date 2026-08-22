@@ -11,10 +11,9 @@ namespace AutomotiveDMS.Domain.Entities
         public int VehicleId { get; set; }
         public int FromZoneId { get; set; }
         public int ToZoneId { get; set; }
-        public string? ChangedBy { get; set; } = string.Empty;
-        public DateTime ChangedDate { get; set; }
+        public string? MovedBy { get; set; } = string.Empty;
+        public DateTime MovedDate { get; set; }
         public string? Notes { get; set; }
-
         public Vehicle Vehicle { get; set; } = null!;
         public Zone FromZone { get; set; } = null!;
         public Zone?ToZone { get; set; } = null!;

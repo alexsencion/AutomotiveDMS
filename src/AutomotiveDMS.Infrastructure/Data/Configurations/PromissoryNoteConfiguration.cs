@@ -25,7 +25,7 @@ namespace AutomotiveDMS.Infrastructure.Data.Configurations
 
             builder.HasOne(p => p.Contract)
                 .WithMany(c => c.PromissoryNotes)
-                .HasForeignKey(p => p.Contract.Id)
+                .HasForeignKey(p => p.ContractId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

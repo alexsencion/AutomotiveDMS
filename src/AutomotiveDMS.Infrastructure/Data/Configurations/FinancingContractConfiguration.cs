@@ -17,7 +17,7 @@ namespace AutomotiveDMS.Infrastructure.Data.Configurations
             builder.Property(f => f.ContractNumber).IsRequired().HasMaxLength(50);
             builder.Property(f => f.PrincipalAmount).HasColumnType("decimal(18,2)");
             builder.Property(f => f.DownPayment).HasColumnType("decimal(18,2)");
-            builder.Property(f => f.InterestRate).HasColumnType("decimal(18,2)");
+            builder.Property(f => f.InterestRate).HasColumnType("decimal(5,2)");
             builder.Property(f => f.MonthlyPayment).HasColumnType("decimal(18,2)");
             builder.Property(f => f.Notes).HasMaxLength(2000);
             builder.Property(f => f.Status).HasConversion<int>();

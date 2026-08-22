@@ -21,7 +21,7 @@ namespace AutomotiveDMS.Infrastructure.Data
         public DbSet<VehicleZoneHistory> VehicleZoneHistory { get; set; }
         public DbSet<VehiclePriceHistory> VehiclePriceHistory { get; set; }
 
-        public DbSet<CommunicationLog> Customers { get; set; }
+        public DbSet<Customer> Customers { get; set; }
         public DbSet<CommunicationLog> CommunicationLogs { get; set; }
         public DbSet<CustomerInteractionNote> CustomerInteractionNotes { get; set; }
 
