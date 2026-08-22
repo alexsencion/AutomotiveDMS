@@ -12,8 +12,9 @@ namespace AutomotiveDMS.Application.Mappings
     {
         public VehicleProfile()
         {
-            CreateMap<CreateVehicleDto, Vehicle>()
-                .ForMember(dest => dest.Vin,
+            /*
+            CreateMap<CreateVehicleDto, VehicleStatusHistory>()
+                .ForMember(dest => dest.VIN,
                     opt => opt.MapFrom(src => src.Vin.ToUpperInvariant().Trim()))
                 .ForMember(dest => dest.Status,
                     opt => opt.MapFrom(_ => VehicleStatus.Available))
@@ -32,7 +33,7 @@ namespace AutomotiveDMS.Application.Mappings
                 .ForMember(dest => dest.Documents, opt => opt.Ignore());
 
 
-            CreateMap<Vehicle, VehicleListDto>()
+            CreateMap<VehicleStatusHistory, VehicleListDto>()
                 .ForMember(dest => dest.ZoneName,
                     opt => opt.MapFrom(src => src.Zone != null
                     ? src.Zone.Name
@@ -40,7 +41,7 @@ namespace AutomotiveDMS.Application.Mappings
                 .ForMember(dest => dest.Status,
                     opt => opt.MapFrom(src => src.Status.ToString()));
 
-            CreateMap<Vehicle, VehicleSummaryDto>()
+            CreateMap<VehicleStatusHistory, VehicleSummaryDto>()
                 .ForMember(dest => dest.Display,
                     opt => opt.MapFrom(src =>
                         $"{src.Year} {src.Make} {src.Model} ({src.Vin})"))
@@ -68,6 +69,8 @@ namespace AutomotiveDMS.Application.Mappings
             CreateMap<VehiclePriceHistory, VehiclePriceHistoryDto>()
                 .ForMember(dest => dest.PriceType,
                     opt => opt.MapFrom(src => src.PriceType.ToString()));
+
+            */
 
         }
     }

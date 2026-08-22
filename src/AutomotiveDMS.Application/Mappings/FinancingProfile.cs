@@ -51,26 +51,6 @@ namespace AutomotiveDMS.Application.Mappings
                         : string.Empty))
                 .ForMember(dest => dest.RemainingBalance, opt => opt.Ignore());
 
-            CreateMap<RecordPaymentDto, Payment>()
-                .ForMember(dest => dest.PaymentMethod,
-                    opt => opt.MapFrom(src =>
-                        Enum.Parse<PaymentMethod>(src.PaymentMethod, ignoreCase: true)))
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Contract, opt => opt.Ignore())
-                .ForMember(dest => dest.PaymentSchedule, opt => opt.Ignore());
-
-            CreateMap<Payment, PaymentDto>()
-                .ForMember(dest => dest.PaymentMethod,
-                    opt => opt.MapFrom(src => src.PaymentMethod.ToString()))
-                .ForMember(dest => dest.InstallmentNumber,
-                    opt => opt.MapFrom(src => src.PaymentSchedule != null
-                        ? src.PaymentSchedule.InstallmentNumber
-                        : (int?)null))
-                .ForMember(dest => dest.RecordedBy,
-                    opt => opt.MapFrom(src => src.CreatedBy));
-
             CreateMap<CreateGuarantorDto, Guarantor>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Contract, opt => opt.Ignore());

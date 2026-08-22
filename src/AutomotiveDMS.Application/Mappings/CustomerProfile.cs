@@ -24,7 +24,7 @@ namespace AutomotiveDMS.Application.Mappings
                 .ForMember(dest => dest.ModifiedBy, opt => opt.Ignore())
                 .ForMember(dest => dest.ModifiedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Contracts, opt => opt.Ignore())
-                .ForMember(dest => dest.CommunicationLog, opt => opt.Ignore())
+                .ForMember(dest => dest.CommunicationLogs, opt => opt.Ignore())
                 .ForMember(dest => dest.InteractionNotes, opt => opt.Ignore())
                 .ForMember(dest => dest.Documents, opt => opt.Ignore());
 
@@ -54,30 +54,11 @@ namespace AutomotiveDMS.Application.Mappings
                         src.CustomerType == CustomerType.Individual
                             ? src.Cedula ?? string.Empty
                             : src.Rnc ?? string.Empty));
-
-            CreateMap<CustomerInteractionNote, CreateInteractionNoteDto>()
-                .ForMember(dest => dest.Channel,
-                    opt => opt.MapFrom(src => src.Channel.ToString()));
-
-            CreateMap<CreateInteractionNoteDto, CustomerInteractionNote>()
-                .ForMember(dest => dest.Channel,
-                    opt => opt.MapFrom(src =>
-                        Enum.Parse<CommunicationChannel>(src.Channel, ignoreCase: true)))
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
-                .ForMember(dest => dest.Customer, opt => opt.Ignore());
-
-            CreateMap<CommunicationLog, CommunicationLogDto>()
-                .ForMember(dest => dest.Channel,
-                    opt => opt.MapFrom(src => src.Channel.ToString()))
-                .ForMember(dest => dest.Status,
-                    opt => opt.MapFrom(src => src.Status.ToString()));
         }
 
         private static string BuildDisplayName(Customer customer) =>
             customer.CustomerType == CustomerType.Individual
                 ? $"{customer.FirstName} {customer.LastName}".Trim()
-                : customer.BusinessName ?? string.Empty;
+                : customer.CompanyName ?? string.Empty;
     }
 }
