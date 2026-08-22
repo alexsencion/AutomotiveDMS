@@ -10,14 +10,13 @@ namespace AutomotiveDMS.Domain.Entities
         public int ContractId { get; set; }
         public int InstallmentNumber { get; set; }
         public DateTime DueDate { get; set; }
-        public decimal TotalDue { get; set; }
-        public decimal PrincipalDue { get; set; }
-        public decimal InterestDue { get; set; }
-        public decimal RemainingBalance { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal PrincipalAmount { get; set; }
+        public decimal InterestAmount { get; set; }
+        public decimal Balance { get; set; }
         public bool IsPaid { get; set; } = false;
         public DateTime? PaidDate { get; set; }
 
-        public FinancingContract? Contract { get; set; }
-        public Payment? Payment { get; set; }
+        public FinancingContract Contract { get; set; } = null!;
     }
 }

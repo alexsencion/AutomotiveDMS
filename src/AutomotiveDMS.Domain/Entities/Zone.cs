@@ -10,8 +10,9 @@ namespace AutomotiveDMS.Domain.Entities
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public int Capacity { get; set; }
+        public bool IsActive { get; set; } = true;
 
-        public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+        public ICollection<Vehicle> Vehicles { get; set; } = [];
+        public ICollection<VehicleZoneHistory> ZoneHistory { get; set; } = [];
     }
 }

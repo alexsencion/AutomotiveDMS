@@ -11,10 +11,10 @@ namespace AutomotiveDMS.Domain.Entities
         public int VehicleId { get; set; }
         public VehicleStatus OldStatus { get; set; }
         public VehicleStatus NewStatus { get; set; }
-        public string? Reason { get; set; }
-        public string? ChangedBy { get; set; } = string.Empty;
+        public string ChangedBy { get; set; } = string.Empty;
         public DateTime ChangedDate { get; set; }
+        public string? Notes { get; set; }
 
-        public Vehicle? Vehicle { get; set; }
+        public Vehicle Vehicle { get; set; } = null!;
     }
 }

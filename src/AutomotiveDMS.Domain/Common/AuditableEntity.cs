@@ -10,6 +10,5 @@ namespace AutomotiveDMS.Domain.Common
         public string CreatedBy { get; set; } = string.Empty;
         public DateTime? ModifiedDate { get; set; }
         public string? ModifiedBy { get; set; }
-        public bool IsActive { get; set; } = true;
     }
 }

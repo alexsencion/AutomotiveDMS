@@ -10,6 +10,5 @@ namespace AutomotiveDMS.Domain.Enums
         PaidOff = 2,
         Defaulted = 3,
         Cancelled = 4,
-        Restructured = 5
     }
 }

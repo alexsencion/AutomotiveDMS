@@ -12,10 +12,10 @@ namespace AutomotiveDMS.Domain.Entities
         public CommunicationChannel Channel { get; set; }
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public string? ExternalId { get; set; }
+        public bool IsSuccess { get; set; }
+        public string? ErrorMessage { get; set; }
         public DateTime SentDate { get; set; }
 
-        public Customer? Customer { get; set; }
+        public Customer Customer { get; set; } = null!;
     }
 }
