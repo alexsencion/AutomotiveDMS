@@ -1,0 +1,39 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  },
+
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=tcp:automotivedms-test.database.windows.net,1433;Initial Catalog=AutomotiveDMS_Test;Persist Security Info=False;User ID=testuser;Password=YOUR_TEST_PASSWORD_HERE;MultipleActiveResultSets=False;Encrypt=True;Connection Timeout=30;TrustServerCertificate=False"
+  },
+
+  "JwtSettings": {
+    "Secret": "test-secret-key-256-bits-long-minimum-for-hs256-algorithm-testing-only"
+  },
+
+  "SendGrid": {
+    "ApiKey": "test-key-placeholder"
+  },
+
+  "Twilio": {
+    "AccountSid": "test-account-sid-placeholder",
+    "AuthToken": "test-auth-token-placeholder",
+    "FromNumber": "+1234567890"
+  },
+
+  "Azure": {
+    "BlobStorage": {
+      "ConnectionString": "UseDevelopmentStorage=true",
+      "ContainerName": "documents-test"
+    }
+  },
+
+  "Seed": {
+    "AdminEmail": "admin@test.automotivedms.com",
+    "AdminPassword": "TestAdmin@12345!",
+    "AdminFirstName": "Test",
+    "AdminLastName": "Administrator"
+  }
+}

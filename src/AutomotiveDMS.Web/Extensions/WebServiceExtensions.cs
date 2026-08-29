@@ -31,17 +31,35 @@
                 options.AddPolicy("AdminOrManager",
                     policy => policy.RequireRole("Admin", "Manager"));
 
-                options.AddPolicy("CanViewFinancing",
-                    policy => policy.RequireRole("Admin", "Manager", "Finance"));
-
-                options.AddPolicy("CanRecordPayments",
-                    policy => policy.RequireRole("Admin", "Manager", "Finance"));
-
                 options.AddPolicy("CanManageVehicles",
-                    policy => policy.RequireRole("Admin", "Manager", "Sales"));
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanViewVehicles",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanManageCustomers",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
 
                 options.AddPolicy("CanViewCustomers",
-                    policy => policy.RequireRole("Admin", "Manager", "Sales", "Finance"));
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanManageFinancing",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanRecordPayments",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanViewFinancing",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanViewReports",
+                    policy => policy.RequireRole("Admin", "Manager", "Secretary"));
+
+                options.AddPolicy("CanManageUsers",
+                    policy => policy.RequireRole("Admin"));
+
+                options.AddPolicy("CanViewUsers",
+                    policy => policy.RequireRole("Admin"));
             });
 
             services.AddSession(options =>
