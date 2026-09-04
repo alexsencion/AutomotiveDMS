@@ -22,15 +22,28 @@ namespace AutomotiveDMS.IntegrationTests.Data
 
         public DatabaseSeederTests()
         {
-            _configuration = new ConfigurationBuilder()
+            var configBuilder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true)
-                .AddJsonFile("appsettings.IntegrationTest.json", optional: false)
-                .Build();
+                .AddJsonFile("appsettings.IntegrationTest.json", optional: true)
+                .AddEnvironmentVariables();
+
+            _configuration = configBuilder.Build();
+
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Connection string 'DefaultConnection' not found. " +
+                    "Provide via: " +
+                    "1. appsettings.Integration.json (locally, gitignored) " +
+                    "2. ConnectionStrings__DefaultConnection environment variable (CI)");
+            }
 
             var serviceCollection = new ServiceCollection();
 
             serviceCollection.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(connectionString));
 
             serviceCollection
                 .AddIdentity<ApplicationUser, IdentityRole>(options =>

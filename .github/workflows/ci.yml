@@ -76,21 +76,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
 
-    services:
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "CI_Strong!Pass1"
-          MSSQL_PID: "Developer"
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CI_Strong!Pass1' -Q 'SELECT 1' -No"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-          --health-start-period 30s
+    env:
+      ConnectionStrings__DefaultConnection: ${{ secrets.INTEGRATION_TEST_CONNECTION_STRING }}
+
+      Seed__AdminEmail: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_EMAIL }}
+      Seed__AdminPassword: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_PASSWORD }}
+      Seed__AdminFirstName: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_FIRSTNAME }}
+      Seed__AdminLastName: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_LASTNAME }}
 
     steps:
       - name: Checkout
@@ -119,11 +111,6 @@ jobs:
           --configuration Release
 
       - name: Integration Tests
-        env:
-          ConnectionStrings__DefaultConnection: >-
-            Server=localhost,1433;Database=AutomotiveDMS_Test;
-            User Id=sa;Password=CI_Strong!Pass1;
-            TrustServerCertificate=True;
         run: >
           dotnet test tests/AutomotiveDMS.IntegrationTests/AutomotiveDMS.IntegrationTests.csproj
           --no-build

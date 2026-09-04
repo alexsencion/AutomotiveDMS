@@ -24,4 +24,8 @@
     <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
+  <ItemGroup>
+	  <None Remove="appsettings.IntegrationTest.json" />
+  </ItemGroup>
+
 </Project>

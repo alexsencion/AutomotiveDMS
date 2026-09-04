@@ -25,7 +25,8 @@
 	<ItemGroup>
 		<None Include="..\..\src\AutomotiveDMS.Web\appsettings.IntegrationTest.json"
 			  Link="appsettings.IntegrationTest.json"
-			  CopyToOutputDirectory="PreserveNewest" />
+			  CopyToOutputDirectory="PreserveNewest"
+		      Condition="Exists('..\..\src\AutomotiveDMS.Web\appsettings.IntegrationTest.json')" />
 	</ItemGroup>
 
   <ItemGroup>
