@@ -30,7 +30,9 @@ namespace AutomotiveDMS.IntegrationTests.Data
 
             _configuration = configBuilder.Build();
 
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            var connectionString =
+                Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ??
+                _configuration.GetConnectionString("DefaultConnection");
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException(
@@ -102,7 +104,8 @@ namespace AutomotiveDMS.IntegrationTests.Data
                 throw new InvalidOperationException(
                     "Test database initialization failed. " +
                     "Ensure the Azure SQL test database is set up with migrations applied. " +
-                    "Run: dotnet ef database update --configuration Release -- --environment IntegrationTest", 
+                    "Local: create appsettings.IntegrationTest.json with connection string " +
+                    "CI: ensure ConnectionStrings__DefaultConnection secret is set in GitHub",
                     ex);
             }
         }

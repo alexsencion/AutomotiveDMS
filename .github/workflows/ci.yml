@@ -84,6 +84,8 @@ jobs:
       Seed__AdminFirstName: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_FIRSTNAME }}
       Seed__AdminLastName: ${{ secrets.INTEGRATION_TEST_SEED_ADMIN_LASTNAME }}
 
+      DOTNET_ENVIRONMENT: Integration
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
