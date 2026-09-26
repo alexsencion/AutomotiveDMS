@@ -17,6 +17,15 @@ namespace AutomotiveDMS.Infrastructure.Identity
 
         public override async Task<bool> CanSignInAsync(ApplicationUser user)
         {
+            var currentUser = await UserManager.FindByIdAsync(user.Id);
+
+            if (currentUser is null)
+            {
+                Logger.LogWarning(
+                    "CanSignInAsync called with user ID {UserId}, but user not found in database", user.Id);
+                return false;
+            }
+
             if (!user.IsActive)
             {
                 Logger.LogWarning(

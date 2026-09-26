@@ -4,7 +4,8 @@
     {
         public static IServiceCollection AddWebServices(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IWebHostEnvironment environment)
         {
             services.AddControllersWithViews();
 
@@ -18,7 +19,9 @@
 
                 options.Cookie.HttpOnly = true;
 
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SecurePolicy = environment.IsProduction()
+                    ? CookieSecurePolicy.Always
+                    : CookieSecurePolicy.SameAsRequest;
 
                 options.Cookie.SameSite = SameSiteMode.Strict;
             });
