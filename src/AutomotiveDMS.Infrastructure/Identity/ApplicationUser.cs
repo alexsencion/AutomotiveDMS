@@ -11,7 +11,7 @@ namespace AutomotiveDMS.Infrastructure.Identity
         public string LastName { get; init; } = string.Empty;
 
         public string FullName => $"{FirstName} {LastName}".Trim();
-        public bool IsActive { get; init; } = true;
+        public bool IsActive { get; set; } = true;
         public DateTime CreatedDate { get; init; } = DateTime.UtcNow;
         public DateTime? LastLoginDate { get; set; }
     }

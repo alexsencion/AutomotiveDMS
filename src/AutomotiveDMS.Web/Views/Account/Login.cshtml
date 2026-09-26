@@ -1,0 +1,73 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="cold-md-4">
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold">Automotive DMS</h4>
+                    <p class="text-muted small">Sign in to your account</p>
+                </div>
+
+                <form asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl"/>
+
+                    @* Summary of all model errors (wrong credentials, locked out, etc.) *@
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 small"
+                         style="display:@(ViewData.ModelState.IsValid ? "none" : "block")">
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email"
+                               class="form-control"
+                               placeholder="you@example.com"
+                               autocomplete="email"
+                               autofocus />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <input asp-for="Password"
+                               class="form-control"
+                               placeholder="••••••••"
+                               autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4 d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input asp-for="RememberMe"
+                                   class="form-check-input"/>
+                            <label asp-for="RememberMe"
+                                   class="form-check-label small">
+                            </label>
+                        </div>
+                        <a asp-action="ForgotPassword"
+                            class="small text-decoration-none">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Sign In
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

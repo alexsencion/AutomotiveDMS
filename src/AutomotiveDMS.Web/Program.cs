@@ -25,7 +25,7 @@ try
 
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddApplicationServices();
-    builder.Services.AddWebServices(builder.Configuration);
+    builder.Services.AddWebServices(builder.Configuration, builder.Environment);
 
     var app = builder.Build();
 
