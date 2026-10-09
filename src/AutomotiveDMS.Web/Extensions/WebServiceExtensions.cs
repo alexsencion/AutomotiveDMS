@@ -1,4 +1,6 @@
-﻿namespace AutomotiveDMS.Web.Extensions
+﻿using System.Threading.RateLimiting;
+
+namespace AutomotiveDMS.Web.Extensions
 {
     public static class WebServiceExtensions
     {
@@ -70,6 +72,21 @@
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+            });
+
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.AddPolicy(RateLimitPolicies.PassowordReset, HttpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(15),
+                            QueueLimit = 0
+                        }));
             });
 
             services.AddHttpContextAccessor();
