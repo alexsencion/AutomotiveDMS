@@ -6,7 +6,10 @@
     "Secret": "your-strong-256-bit-secret-key-here"
   },
   "SendGrid": {
-    "ApiKey": "SG.your-actual-sendgrid-key"
+    "Enabled": false,
+    "ApiKey": "",
+    "SenderEmail": "the-sender-email",
+    "SenderName": "the-sender-name"
   },
   "Twilio": {
     "AccountSid": "ACyour-actual-account-sid",
@@ -16,5 +19,9 @@
     "BlobStorage": {
       "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net"
     }
+  },
+
+  "App": {
+    "Domain": "the-app-domain"
   }
 }

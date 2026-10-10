@@ -55,6 +55,8 @@ try
 
     app.UseRouting();
 
+    app.UseRateLimiter();
+
     app.UseSession();
 
     app.UseAuthentication();

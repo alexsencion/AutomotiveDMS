@@ -1,12 +1,16 @@
 ﻿using AutomotiveDMS.Application.Interfaces.Repositories;
+using AutomotiveDMS.Application.Interfaces.Services;
 using AutomotiveDMS.Infrastructure.Data;
 using AutomotiveDMS.Infrastructure.Identity;
 using AutomotiveDMS.Infrastructure.Repositories;
+using AutomotiveDMS.Infrastructure.Services.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using QuestPDF.Infrastructure;
+using SendGrid;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -64,7 +68,25 @@ namespace AutomotiveDMS.Infrastructure.Extensions
             services.AddScoped<IDocumentRepository, DocumentRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            services.AddScoped<IEmailService, SendGridEmailService>();
+            services.AddOptions<SendGridOptions>()
+                .Bind(configuration.GetSection(SendGridOptions.SectionName))
+                .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.ApiKey),
+                    "SendGrid:ApiKey is required when SendGrid:Enabled is true.")
+                .Validate(o => o.Enabled || !string.IsNullOrWhiteSpace(o.SenderEmail),
+                    "SendGrid:SenderEmail is required when SendGrid:Enabled is true.")
+                .ValidateOnStart();
+
+            if (configuration.GetValue<bool>($"{SendGridOptions.SectionName}:Enabled"))
+            {
+                services.AddSingleton<ISendGridClient>(sp =>
+                    new SendGridClient(sp.GetRequiredService<IOptions<SendGridOptions>>().Value.ApiKey));
+                services.AddScoped<IEmailService, SendGridEmailService>();
+            }
+            else
+            {
+                services.AddScoped<IEmailService, LoggingEmailService>();
+            }
+
             services.AddScoped<ISmsService, TwilioSmsService>();
             services.AddScoped<IFileStorageService, AzureBlobStorageService>();
             services.AddScoped<IPdfService, QuestPdfService>();

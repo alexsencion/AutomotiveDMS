@@ -1,8 +1,15 @@
-﻿using AutomotiveDMS.Infrastructure.Identity;
+﻿using AutomotiveDMS.Application.Interfaces.Services;
+using AutomotiveDMS.Infrastructure.Identity;
+using AutomotiveDMS.Web.Emails;
+using AutomotiveDMS.Web.Extensions;
 using AutomotiveDMS.Web.ViewModels.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
+using System.Text;
 
 namespace AutomotiveDMS.Web.Controllers
 {
@@ -10,17 +17,29 @@ namespace AutomotiveDMS.Web.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
+        private readonly DataProtectionTokenProviderOptions _tokenOptions;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
+            IEmailService emailService,
+            IConfiguration configuration,
+            IOptions<DataProtectionTokenProviderOptions> tokenOptions,
             ILogger<AccountController> logger)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _emailService = emailService;
+            _configuration = configuration;
+            _tokenOptions = tokenOptions.Value;
             _logger = logger;
         }
+
+        private const string InvalidLinkMessage =
+            "This reset link is invalid or has expired. Please request a new one.";
 
         [HttpGet]
         [AllowAnonymous]
@@ -107,6 +126,173 @@ namespace AutomotiveDMS.Web.Controllers
                 "Invalid email or password.");
 
             return View(model);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting(RateLimitPolicies.PassowordReset)]
+        public async Task<IActionResult> ForgotPassword(
+            ForgotPasswordViewModel model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null || !user.IsActive)
+            {
+                _logger.LogInformation(
+                    "Password reset requested for an unknown or inactive account");
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            var email = PasswordResetEmail.Create(
+                recepientEmail: user.Email!,
+                recipientName: user.FullName,
+                resetLink: BuildResetLink(user.Id, encodedToken),
+                validFor: _tokenOptions.TokenLifespan);
+
+            var sent = await _emailService.SendAsync(email, cancellationToken);
+
+            if (sent)
+            {
+                _logger.LogInformation("Password reset email sent to user {UserId}", user.Id);
+            }
+            else
+            {
+                _logger.LogError("Password reset email FAILED for user {UserId}", user.Id);
+            }
+
+            return RedirectToAction(nameof(ForgotPasswordConfirmation));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPasswordConfirmation() => View();
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword(string? userId, string? token)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+            {
+                TempData["ErrorMessage"] = InvalidLinkMessage;
+                return RedirectToAction(nameof(Login));
+            }
+
+            Response.Headers["Referrer-Policy"] = "no-referre";
+            Response.Headers.CacheControl = "no-store";
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            string decodedToken;
+            try
+            {
+                decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            }
+            catch (FormatException)
+            {
+                TempData["ErrorMessage"] = InvalidLinkMessage;
+                return RedirectToAction(nameof(Login));
+            }
+
+            var isValid = user is { IsActive: true } &&
+                await _userManager.VerifyUserTokenAsync(
+                    user,
+                    _userManager.Options.Tokens.PasswordResetTokenProvider,
+                    UserManager<ApplicationUser>.ResetPasswordTokenPurpose,
+                    decodedToken);
+
+            if (!isValid)
+            {
+                TempData["ErrorMessage"] = InvalidLinkMessage;
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(new ResetPasswordViewModel { UserId = userId, Token = token });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+
+            if (user is null || !user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, InvalidLinkMessage);
+                return View(model);
+            }
+
+            string token;
+            try
+            {
+                token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
+            }
+            catch (FormatException)
+            {
+                ModelState.AddModelError(string.Empty, InvalidLinkMessage);
+                return View(model);
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, token, model.Password);
+
+            if (!result.Succeeded)
+            {
+                var invalidTokenCode = _userManager.ErrorDescriber.InvalidToken().Code;
+
+                if (result.Errors.Any(e => e.Code == invalidTokenCode))
+                {
+                    ModelState.AddModelError(string.Empty, InvalidLinkMessage);
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(nameof(model.Password), error.Description);
+                    }
+                }
+
+                return View(model);
+            }
+
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+
+            _logger.LogInformation("Password reset completed for user {UserId}", user.Id);
+
+            TempData["SuccessMessage"] =
+                "Your password has been reset. Sign in with your new password.";
+
+            return RedirectToAction(nameof(Login));
+        }
+
+
+        private string BuildResetLink(string userId, string encodedToken)
+        {
+            var baseUrl = _configuration["App:Domain"]?.TrimEnd('/')
+                ?? throw new InvalidOperationException("App:Domain is not configured.");
+
+            var path = Url.Action(nameof(ResetPassword), "Account",
+                new { userId, token = encodedToken })!;
+
+            return $"{baseUrl}{path}";
         }
 
         [HttpPost]

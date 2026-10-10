@@ -14,7 +14,10 @@
   },
 
   "SendGrid": {
-    "ApiKey": "test-key-placeholder"
+    "Enabled": false,
+    "ApiKey": "",
+    "SenderEmail": "the-sender-email",
+    "SenderName": "the-sender-name"
   },
 
   "Twilio": {
@@ -28,6 +31,10 @@
       "ConnectionString": "UseDevelopmentStorage=true",
       "ContainerName": "documents-test"
     }
+  },
+
+  "App": {
+    "Domain": "the-app-domain"
   },
 
   "Seed": {
