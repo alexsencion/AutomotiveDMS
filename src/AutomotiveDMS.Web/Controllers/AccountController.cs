@@ -41,6 +41,10 @@ namespace AutomotiveDMS.Web.Controllers
         private const string InvalidLinkMessage =
             "This reset link is invalid or has expired. Please request a new one.";
 
+        private const string InvalidInvitiationMessage =
+            "This invitation link is invalid, has expired, or was already used. " +
+            "Ask the administrator to resend it, or use \"Forgot password?\".";
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
@@ -283,16 +287,81 @@ namespace AutomotiveDMS.Web.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-
-        private string BuildResetLink(string userId, string encodedToken)
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> SetPassword(string? userId, string? token)
         {
-            var baseUrl = _configuration["App:Domain"]?.TrimEnd('/')
-                ?? throw new InvalidOperationException("App:Domain is not configured.");
+            Response.Headers["Referrer-Policy"] = "no-referrer";
+            Response.Headers.CacheControl = "no-store";
 
-            var path = Url.Action(nameof(ResetPassword), "Account",
-                new { userId, token = encodedToken })!;
+            if (!await IsValidInvitationAsync(userId, token))
+            {
+                TempData["ErrorMessage"] = InvalidInvitiationMessage;
+                return RedirectToAction(nameof(Login));
+            }
 
-            return $"{baseUrl}{path}";
+            return View(new SetPasswordViewModel { UserId = userId!, Token = token! });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetPassword(SetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (!await IsValidInvitationAsync(model.UserId, model.Token))
+            {
+                ModelState.AddModelError(string.Empty, InvalidInvitiationMessage);
+                return View(model);
+            }
+
+            var user = (await _userManager.FindByIdAsync(model.UserId))!;
+            var result = await _userManager.AddPasswordAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(nameof(model.Password), error.Description);
+                return View(model);
+            }
+
+            _logger.LogInformation("User {UserId} accepted invitation and set a password", user.Id);
+
+            TempData["SuccessMessage"] = "Your password has been set. Sign in to get started.";
+            return RedirectToAction(nameof(Login));
+        }
+
+
+        private string BuildResetLink(string userId, string encodedToken) =>
+            Url.AbsoluteActionFromAppDomain(_configuration,
+                nameof(ResetPassword), "Account", new { userId, token = encodedToken });
+
+
+        private async Task<bool> IsValidInvitationAsync(string? userId, string? encodedToken)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(encodedToken))
+                return false;
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || !user.IsActive || user.PasswordHash is not null)
+                return false;
+
+            string token;
+            try
+            {
+                token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(encodedToken));
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+
+            return await _userManager.VerifyUserTokenAsync(
+                user, InvitationTokenProvider.ProviderName, InvitationTokenProvider.Purpose, token);
         }
 
         [HttpPost]

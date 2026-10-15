@@ -58,6 +58,7 @@ namespace AutomotiveDMS.Infrastructure.Extensions
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders()
+            .AddTokenProvider<InvitationTokenProvider>(InvitationTokenProvider.ProviderName)
             .AddSignInManager<CustomSignInManager>();
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

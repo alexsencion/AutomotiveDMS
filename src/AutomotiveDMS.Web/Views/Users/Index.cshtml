@@ -1,0 +1,66 @@
+﻿@model IReadOnlyList<UserListItemViewModel>
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="d-flex justify-content-between align-items-center">
+    <h2 class="fw-bold mb-0">Users</h2>
+    <a asp-action="Create" class="btn btn-primary">New user</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last login</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>
+                        @u.FullName
+                        @if (u.IsCurrentUser) { <span class="badge text-bg-light border ms-1">You</span> }
+                    </td>
+                    <td>@u.Email</td>
+                    <td><span class="badge text-bg-secondary">@u.Role</span></td>
+                    <td>
+                        @if (!u.IsActive)
+                        {
+                            <span class="badge text-bg-danger">Inactive</span>
+                        }
+                        else if (u.InvitationPending)
+                        {
+                            <span class="badge text-bg-warning">Invitation pending</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-success">Active</span>   
+                        }
+                    </td>
+                    <td>@(u.LastLoginLocal?.ToString("dd/MM/yyyy hh:mm tt") ?? "Never")</td>
+                    <td class="text-end">
+                        @if (u.InvitationPending && u.IsActive)
+                        {
+                            <form asp-action="ResendInvitation" asp-route-id="@u.Id"
+                                    method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    Resend invitation
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

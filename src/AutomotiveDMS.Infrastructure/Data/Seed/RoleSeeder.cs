@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutomotiveDMS.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -9,12 +10,7 @@ namespace AutomotiveDMS.Infrastructure.Data.Seed
 {
     public static class RoleSeeder
     {
-        public static readonly string[] Roles =
-        [
-            "Admin",
-            "Manager",
-            "Secretary"
-        ];
+        public static readonly string[] Roles = [AppRoles.Admin, AppRoles.Manager, AppRoles.Secretary];
 
         public static async Task SeedAsync(IServiceProvider services)
         {
