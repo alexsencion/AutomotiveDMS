@@ -52,7 +52,8 @@ namespace AutomotiveDMS.IntegrationTests.Controllers
             get.StatusCode.Should().Be(HttpStatusCode.Redirect);
             get.Headers.Location!.ToString().Should().Contain($"/Account/Login");
 
-            var post = await PostSetPasswordAsync(anon, link, "Another@2026!", "Another@2026!");
+            var another = GeneratePassword();
+            var post = await PostSetPasswordAsync(anon, link, another, another);
             post.StatusCode.Should().Be(HttpStatusCode.OK);
             (await post.Content.ReadAsStringAsync()).Should().ContainEquivalentOf("already used");
         }
@@ -137,7 +138,7 @@ namespace AutomotiveDMS.IntegrationTests.Controllers
         [Fact]
         public async Task PendingUser_CanSetPasswordThroughPasswordResetFallback()
         {
-            var (_, email) = await CreateUserDirectlyAsync(AppRoles.Secretary, password: null);
+            var (_, email) = await CreateUserDirectlyAsync(AppRoles.Secretary, pending: true);
 
             var succeeded = await WithUserManagerAsync(async um =>
             {
@@ -187,7 +188,7 @@ namespace AutomotiveDMS.IntegrationTests.Controllers
         [Fact]
         public async Task ResendInvitation_InactiveUser_SendsNothing()
         {
-            var (id, email) = await CreateUserDirectlyAsync(AppRoles.Secretary, password: null, isActive: false);
+            var (id, email) = await CreateUserDirectlyAsync(AppRoles.Secretary, pending: true, isActive: false);
             using var admin = await LoginAsAdminAsync();
 
             var response = await PostResendAsync(admin, id);

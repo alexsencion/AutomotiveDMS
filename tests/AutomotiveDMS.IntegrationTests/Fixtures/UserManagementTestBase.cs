@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -16,14 +17,17 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
     public sealed record InvitationLink(string UserId, string Token, string RelativeUrl);
     public abstract class UserManagementTestBase : IAsyncLifetime
     {
-        protected const string KnownPassword = "Known@2026!";
-        protected const string NewPassword = "NewPass@2026!";
+        protected static readonly string KnownPassword = GeneratePassword();
+        protected static readonly string NewPassword = GeneratePassword();
 
         private readonly List<string> _createdEmails = [];
 
         protected WebAppFixture Fixture { get; }
 
         protected UserManagementTestBase(WebAppFixture fixture) => Fixture = fixture;
+
+        protected static string GeneratePassword() =>
+            $"Aa1!{Convert.ToHexString(RandomNumberGenerator.GetBytes(12))}";
 
         public Task InitializeAsync() => Task.CompletedTask;
 
@@ -35,8 +39,6 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
                 if (user is not null) await um.DeleteAsync(user);
             }
         });
-
-        // http://localhost:5058
 
         protected HttpClient CreateClient() =>
             Fixture.CreateClient(new WebApplicationFactoryClientOptions
@@ -71,7 +73,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
         }
 
         protected Task<(string Id, string Email)> CreateUserDirectlyAsync(
-            string role, string? password = KnownPassword, bool isActive = true)
+            string role, bool pending = false, bool isActive = true)
         {
             var email = NewEmail();
 
@@ -87,9 +89,9 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
                     EmailConfirmed = true
                 };
 
-                var created = password is null
+                var created = pending
                     ? await um.CreateAsync(user)
-                    : await um.CreateAsync(user, password);
+                    : await um.CreateAsync(user, KnownPassword);
                 created.Succeeded.Should().BeTrue(string.Join(", ", created.Errors.Select(e => e.Description)));
 
                 (await um.AddToRoleAsync(user, role)).Succeeded.Should().BeTrue();
