@@ -16,7 +16,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace AutomotiveDMS.IntegrationTests.Data
 {
-    [Collection("Integration Tests Collection")]
+    [Collection(IntegrationTestCollection.Name)]
     public class DatabaseSeederTests : IDisposable
     {
         private readonly IServiceScope _scope;

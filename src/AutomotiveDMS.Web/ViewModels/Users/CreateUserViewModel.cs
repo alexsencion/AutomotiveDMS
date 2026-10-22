@@ -22,7 +22,7 @@ namespace AutomotiveDMS.Web.ViewModels.Users
         [StringLength(256)]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Enter a valid phone number")]
+        [RegularExpression(@"^\+?[0-9\s\-()]{7,20}$", ErrorMessage = "Enter a valid phone number")]
         [StringLength(20)]
         [Display(Name = "Phone (optional)")]
         public string? PhoneNumber { get; set; }

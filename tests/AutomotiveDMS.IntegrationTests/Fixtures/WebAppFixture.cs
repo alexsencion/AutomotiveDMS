@@ -1,12 +1,15 @@
-﻿using AutomotiveDMS.Infrastructure.Data;
+﻿using AutomotiveDMS.Application.Interfaces.Services;
+using AutomotiveDMS.Infrastructure.Data;
 using AutomotiveDMS.Infrastructure.Data.Seed;
 using AutomotiveDMS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
@@ -20,10 +23,17 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
 
         public string AdminEmail { get; private set; } = string.Empty;
         public string AdminPassword { get; private set; } = string.Empty;
+        public FakeEmailService Emails { get; } = new();
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment(EnvironmentName);
+
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IEmailService>();
+                services.AddSingleton<IEmailService>(Emails);
+            });
         }
 
         public async Task InitializeAsync()
