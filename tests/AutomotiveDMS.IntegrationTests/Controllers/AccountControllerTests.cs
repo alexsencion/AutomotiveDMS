@@ -18,7 +18,7 @@ using Twilio.Jwt.AccessToken;
 
 namespace AutomotiveDMS.IntegrationTests.Controllers
 {
-    [Collection("Integration Tests Collection")]
+    [Collection(IntegrationTestCollection.Name)]
     public class AccountControllerTests
     {
         private readonly WebAppFixture _fixture;
