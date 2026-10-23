@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+<!DOCTYPE html>
 
 <html lang="es">
 <head>
@@ -53,6 +54,12 @@
                             @User.Identity.Name        
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    @string.Join(", ", User.FindAll(ClaimTypes.Role).Select(c => c.Value))
+                                </h6>
+                            </li>
+
                             @if (User.IsInRole("Admin"))
                             {
                                 <li>

@@ -10,5 +10,6 @@
         public bool InvitationPending { get; init; }
         public DateTime? LastLoginLocal { get; init; }
         public bool IsCurrentUser { get; init; }
+        public bool IsProtected { get; init; }
     }
 }

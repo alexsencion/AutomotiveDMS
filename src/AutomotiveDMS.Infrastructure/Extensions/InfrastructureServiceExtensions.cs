@@ -61,6 +61,9 @@ namespace AutomotiveDMS.Infrastructure.Extensions
             .AddTokenProvider<InvitationTokenProvider>(InvitationTokenProvider.ProviderName)
             .AddSignInManager<CustomSignInManager>();
 
+            services.Configure<SecurityStampValidatorOptions>(options =>
+                options.ValidationInterval = TimeSpan.Zero);
+
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();

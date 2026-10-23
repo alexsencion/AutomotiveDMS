@@ -51,15 +51,19 @@ namespace AutomotiveDMS.Web.Controllers
             var items = new List<UserListItemViewModel>(users.Count);
             foreach (var u in users)
             {
+                var role = (await _userManager.GetRolesAsync(u)).FirstOrDefault() ?? "-";
+
                 items.Add(new UserListItemViewModel
                 {
                     Id = u.Id,
                     FullName = u.FirstName,
                     Email = u.Email ?? string.Empty,
-                    Role = (await _userManager.GetRolesAsync(u)).FirstOrDefault() ?? "-",
+                    Role = role,
                     IsActive = u.IsActive,
                     InvitationPending = u.PasswordHash is null,
                     LastLoginLocal = u.LastLoginDate is { } d ? DominicanTime.FromUtc(d) : null,
+                    IsCurrentUser = u.Id == currentUserId,
+                    IsProtected = u.Id == currentUserId || role == AppRoles.Admin
                 });
             }
 
@@ -183,6 +187,155 @@ namespace AutomotiveDMS.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            return View(await BuildEditModelAsync(user));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, EditUserViewModel model)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            var isProtected = await IsProtectedAsync(user);
+
+            if (isProtected)
+            {
+                ModelState.Remove(nameof(model.Role))
+;           }
+            else if (!AppRoles.AssignableOnCreation.Contains(model.Role))
+            {
+                ModelState.AddModelError(nameof(model.Role), "Select a valid role.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(await BuildEditModelAsync(user, model));
+            }
+
+            user.FirstName = model.FirstName.Trim();
+            user.LastName = model.LastName.Trim();
+            user.PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim();
+
+            var update = await _userManager.UpdateAsync(user);
+            if (!update.Succeeded)
+            {
+                foreach (var error in update.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+                return View(await BuildEditModelAsync(user, model));
+            }
+
+            if (!isProtected)
+            {
+                var currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+
+                if (!string.Equals(currentRole, model.Role, StringComparison.Ordinal))
+                {
+                    if (!await ChangeRoleAsync(user, currentRole, model.Role))
+                    {
+                        ModelState.AddModelError(string.Empty,
+                            "The details were saved, but the role could not be changed. Please try again");
+                        return View(await BuildEditModelAsync(user, model));
+                    }
+
+                    _logger.LogInformation(
+                        "Admin {AdminId} changed role of user {UserId} from {OldRole} to {NewRole}",
+                        _userManager.GetUserId(User), user.Id, currentRole, model.Role);
+                }
+            }
+
+            TempData["SuccessMessage"] = $"Changes to {user.FullName} were saved";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Deactivate(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            if (await IsProtectedAsync(user))
+            {
+                TempData["ErrorMessage"] = $"Administrator accounts cannot be deactivated";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!user.IsActive)
+            {
+                TempData["WarningMessage"] = $"{user.FullName} is already deactivated";
+                return RedirectToAction(nameof(Index));
+            }
+
+            user.IsActive = false;
+            var result = await _userManager.UpdateSecurityStampAsync(user);
+
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = "The user could not be deactivated. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            _logger.LogInformation("Admin {AdminId} deactivated user {UserId}",
+                _userManager.GetUserId(User), user.Id);
+
+            TempData["SuccessMessage"] = $"{user.FullName} was deactivated and signed out.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reactivate(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            if (user.IsActive)
+            {
+                TempData["WarningMessage"] = $"{user.FullName} is already active.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            user.IsActive = true;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = "The user could not be reactivated. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+
+            _logger.LogInformation("Admin {AdminId} reactivated user {UserId}",
+                _userManager.GetUserId(User), user.Id);
+
+            TempData["SuccessMessage"] = user.PasswordHash is null
+                ? $"{user.FullName} was reactivated. Their previous invitation link no longer works. Use \"Resend invitation\"."
+                : $"{user.FullName} was reactivated and can sign in again.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private async Task<bool> SendInvitationAsync(
             ApplicationUser user, string role, CancellationToken cancellationToken)
         {
@@ -209,5 +362,71 @@ namespace AutomotiveDMS.Web.Controllers
 
         private static IEnumerable<SelectListItem> BuildRoleOptions() =>
             AppRoles.AssignableOnCreation.Select(r => new SelectListItem(r, r));
+
+        private async Task<bool> IsProtectedAsync(ApplicationUser user) =>
+            user.Id == _userManager.GetUserId(User) ||
+            await _userManager.IsInRoleAsync(user, AppRoles.Admin);
+
+        private async Task<bool> ChangeRoleAsync(ApplicationUser user, string? fromRole, string toRole)
+        {
+            if (fromRole is not null)
+            {
+                var removed = await _userManager.RemoveFromRoleAsync(user, fromRole);
+                if (!removed.Succeeded)
+                {
+                    _logger.LogError("Could not remove role {Role} from user {UserId}", fromRole, user.Id);
+                    return false;
+                }
+            }
+
+            var added = await _userManager.AddToRoleAsync(user, toRole);
+            if (added.Succeeded)
+            {
+                return true;
+            }
+
+            if (fromRole is not null)
+            {
+                var restored = await _userManager.AddToRoleAsync(user, fromRole);
+                _logger.LogError(
+                    "Could not add role {NewRole} to user {UserId}; restored {OldRole}: {Restored}", 
+                    toRole, user.Id, fromRole, restored.Succeeded);
+            }
+
+            return false;
+        }
+
+        private async Task<EditUserViewModel> BuildEditModelAsync(
+            ApplicationUser user, EditUserViewModel? posted = null)
+        {
+            var currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? string.Empty;
+            var isProtected = await IsProtectedAsync(user);
+
+            var model = posted ?? new EditUserViewModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                Role = currentRole,
+            };
+
+            model.Id = user.Id;
+            model.Email = user.Email ?? string.Empty;
+            model.IsProtected = isProtected;
+            model.IsActive = user.IsActive;
+            model.InvitationPending = user.PasswordHash is null;
+
+            if (isProtected)
+            {
+                model.Role = currentRole;
+                model.AvailableRoles = [new SelectListItem(currentRole, currentRole)];
+            }
+            else
+            {
+                model.AvailableRoles = BuildRoleOptions();
+            }
+
+            return model;
+        }
     }
 }
