@@ -38,7 +38,11 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
                 var user = await um.FindByEmailAsync(email);
                 if (user is not null) await um.DeleteAsync(user);
             }
+
+            await EnsureAdminIntactAsync(um);
         });
+
+
 
         protected HttpClient CreateClient() =>
             Fixture.CreateClient(new WebApplicationFactoryClientOptions
@@ -50,17 +54,18 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
         protected Task<HttpClient> LoginAsAdminAsync() =>
             LoginAsync(Fixture.AdminEmail, Fixture.AdminPassword);
 
-        protected async Task<HttpClient> LoginAsync(string email, string password)
+        protected async Task<HttpClient> LoginAsync(string email, string password, bool rememberMe = false)
         {
             var client = CreateClient();
             var token = await GetAntiForgeryTokenAsync(client, "/Account/Login");
 
             var response = await client.PostAsync("/Account/Login", Form(
-                ("Email", email), ("Password", password), ("RememberMe", "false"),
+                ("Email", email), ("Password", password), ("RememberMe", rememberMe ? "true" : "false"),
                 ("__RequestVerificationToken", token)));
 
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.Redirect,
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect,
                 $"login for '{email}' should succeed");
+            response.Headers.Location!.ToString().Should().NotContain("Account/Login");
 
             return client;
         }
@@ -156,7 +161,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
         protected static async Task<string> GetAntiForgeryTokenAsync(HttpClient client, string url)
         {
             var response = await client.GetAsync(url);
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK,
+            response.StatusCode.Should().Be(HttpStatusCode.OK,
                 $"GET {url} should render a page containing a form");
 
             var html = await response.Content.ReadAsStringAsync();
@@ -180,7 +185,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
 
         protected static async Task AssertRedirectAsync(HttpResponseMessage response)
         {
-            if (response.StatusCode == System.Net.HttpStatusCode.Redirect) return;
+            if (response.StatusCode == HttpStatusCode.Redirect) return;
 
             var html = await response.Content.ReadAsStringAsync();
             var errors = Regex.Matches(html,
@@ -193,6 +198,25 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
             throw new Xunit.Sdk.XunitException(
                 $"Expected a redirect but got {(int)response.StatusCode}. " +
                 $"Form errors: {(errors.Count > 0 ? string.Join(" | ", errors) : "(none found in HTML)")}");
+        }
+
+        private async Task EnsureAdminIntactAsync(UserManager<ApplicationUser> um)
+        {
+            var admin = await um.FindByEmailAsync(Fixture.AdminEmail);
+            if (admin is null) return;
+
+            if (!admin.IsActive)
+            {
+                admin.IsActive = true;
+                await um.UpdateAsync(admin);
+            }
+
+            var roles = await um.GetRolesAsync(admin);
+            if (roles.Count != 1 || roles[0] != AppRoles.Admin)
+            {
+                await um.RemoveFromRolesAsync(admin, roles);
+                await um.AddToRoleAsync(admin, AppRoles.Admin);
+            }
         }
     }
 }
