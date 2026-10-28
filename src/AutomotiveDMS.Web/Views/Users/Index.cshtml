@@ -46,7 +46,9 @@
                         }
                     </td>
                     <td>@(u.LastLoginLocal?.ToString("dd/MM/yyyy hh:mm tt") ?? "Never")</td>
-                    <td class="text-end">
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+
                         @if (u.InvitationPending && u.IsActive)
                         {
                             <form asp-action="ResendInvitation" asp-route-id="@u.Id"
@@ -56,6 +58,25 @@
                                     Resend invitation
                                 </button>
                             </form>
+                        }
+
+                        @if (!u.IsProtected)
+                        {
+                            if (u.IsActive)
+                            {
+                                <form asp-action="Deactivate" asp-route-id="@u.Id" method="post" class="d-inline"
+                                        onsubmit="return confirm('Deactivate this user? They will be signed out immediately.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Reactivate" asp-route-id="@u.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reactivate</button>
+                                </form>
+                            }
                         }
                     </td>
                 </tr>

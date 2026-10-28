@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace AutomotiveDMS.Infrastructure.Identity
@@ -35,6 +36,19 @@ namespace AutomotiveDMS.Infrastructure.Identity
             }
 
             return await base.CanSignInAsync(user);
+        }
+
+        public override async Task<ApplicationUser?> ValidateSecurityStampAsync(ClaimsPrincipal? principal)
+        {
+            var user = await base.ValidateSecurityStampAsync(principal);
+
+            if (user is { IsActive: false })
+            {
+                Logger.LogInformation("Rejected session of deactivated user {UserId}", user.Id);
+                return null;
+            }
+
+            return user;
         }
     }
 }
