@@ -1,13 +1,17 @@
-﻿using AutomotiveDMS.Application.Interfaces.Repositories;
+﻿using AutomotiveDMS.Application.Auditing;
+using AutomotiveDMS.Application.Interfaces.Repositories;
 using AutomotiveDMS.Application.Interfaces.Services;
 using AutomotiveDMS.Infrastructure.Data;
+using AutomotiveDMS.Infrastructure.Data.Interceptors;
 using AutomotiveDMS.Infrastructure.Identity;
 using AutomotiveDMS.Infrastructure.Repositories;
+using AutomotiveDMS.Infrastructure.Services;
 using AutomotiveDMS.Infrastructure.Services.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using QuestPDF.Infrastructure;
 using SendGrid;
@@ -25,7 +29,13 @@ namespace AutomotiveDMS.Infrastructure.Extensions
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
+
+            services.TryAddScoped<ICurrentUserService, SystemCurrentUserService>();
+            services.AddSingleton(new AuditChangeDetector());
+            services.AddScoped<AuditSaveChangesInterceptor>();
+            services.AddScoped<IAuditService, AuditService>();
+
+            services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
@@ -39,6 +49,8 @@ namespace AutomotiveDMS.Infrastructure.Extensions
                             maxRetryDelay: TimeSpan.FromSeconds(30),
                             errorNumbersToAdd: null);
                     });
+
+                options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
             });
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>

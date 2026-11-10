@@ -1,0 +1,130 @@
+﻿
+@model AuditIndexViewModel
+@{
+    ViewData["Title"] = "Audit Log";
+
+    static string Badge(AuditAction a) => a switch
+    {
+        AuditAction.Created => "text-bg-success",
+        AuditAction.Updated => "text-bg-primary",
+        AuditAction.Deleted => "text-bg-danger",
+        AuditAction.Restored => "text-bg-info",
+        _                    => "text-bg-secondary"
+    };
+}
+
+<h2 class="fw-bold mb-3">Audit Log</h2>
+
+<form method="get" asp-action="Index" class="card card-body shadow-sm mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label asp-for="EntityName" class="form-label small fw-semibold">Entity</label>
+            <select asp-for="EntityName" asp-items="Model.EntityNames" class="form-select form-select-sm">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="EntityId" class="form-label small fw-semibold">Record ID</label>
+            <input asp-for="EntityId" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ChangedBy" class="form-label small fw-semibold">Changed by</label>
+            <select asp-for="ChangedBy" asp-items="Model.Users" class="form-select form-select-sm">
+                <option value="">Anyone</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="ActionType" class="form-label small fw-semibold">Action</label>
+            <select asp-for="ActionType" asp-items="Model.Actions" class="form-select form-select-sm">
+                <option value="">Any</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <label asp-for="From" class="form-label small fw-semibold">From</label>
+            <input asp-for="From" type="date" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-1">
+            <label asp-for="To" class="form-label small fw-semibold">To</label>
+            <input asp-for="To" type="date" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary flex-fill">Filter</button>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Clear</a>
+        </div>
+    </div>
+    <div asp-validation-summary="All" class="text-danger small mt-2"></div>
+</form>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>When (DR time)</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Record</th>
+                    <th>Field</th>
+                    <th>Change</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Result.TotalCount == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">No audit entries match theses filters.</td></tr>
+            }
+            @foreach (var e in Model.Result.Items)
+            {
+                <tr>
+                    <td class="text-nowrap">@DominicanTime.FromUtc(e.ChangedDateUtc).ToString("dd/MM/yyyy hh:mm:ss tt")</td>
+                    <td>@e.ChangedByName</td>
+                    <td><span class="badge @Badge(e.Action)">@e.Action</span></td>
+                    <td>
+                        @if (e.EntityName == "User")
+                        {
+                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@e.EntityId">@e.EntityDisplay</a>
+                            <div class="small text-muted">User</div>
+                        }
+                        else
+                        {
+                            @e.EntityDisplay
+                        }
+                    </td>
+                    <td>@(e.FieldName ?? "-")</td>
+                    <td class="small" style="max-width: 360px">
+                        @if (e.FieldName is not null)
+                        {
+                            <span class="text-truncate d-inline-block align-bottom" style="max-width: 160px"
+                                    title="@e.OldValue">@(e.OldValue ?? "(empty)")</span>
+                            <span class="text-muted">→</span>
+                            <span class="text-truncate d-inline-block align-bottom" style="max-width: 160px"
+                                    title="@e.NewValue">@(e.NewValue ?? "(empty)")</span>
+                        }
+                    </td>
+                    <td class="small text-muted">@e.IpAddres</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Result.TotalPages > 1)
+{
+    <nav class="d-flex justify-content-between align-items-center mt-3">
+        <span class="small text-muted">
+            Page @Model.Result.Page of @Model.Result.TotalPages · @Model.Result.TotalCount entries
+        </span>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(Model.Result.HasPrevious ? "" : "disabled")">
+                <a class="page-link" asp-action="Index"
+                    asp-all-route-data="Model.RouteValuesForPage(Model.Result.Page - 1)">Previous</a>
+            </li>
+            <li class="page-item @(Model.Result.HasNext ? "" : "disabled")">
+                <a class="page-link" asp-action="Index"
+                    asp-all-route-data="Model.RouteValuesForPage(Model.Result.Page + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+}

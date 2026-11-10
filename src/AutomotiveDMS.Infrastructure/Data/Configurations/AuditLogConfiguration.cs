@@ -21,10 +21,12 @@ namespace AutomotiveDMS.Infrastructure.Data.Configurations
             builder.Property(a => a.NewValue).HasMaxLength(4000);
             builder.Property(a => a.ChangedBy).IsRequired().HasMaxLength(450);
             builder.Property(a => a.IpAddress).HasMaxLength(45);
+            builder.Property(a => a.EntityId).IsRequired().HasMaxLength(450);
 
             builder.HasIndex(a => new { a.EntityName, a.EntityId, a.ChangedDate })
                 .HasDatabaseName("IX_AuditLogs_Entity_Date");
-
+            builder.HasIndex(a => a.ChangedDate)
+                .HasDatabaseName("IX_AuditLogs_ChangedDate");
         }
     }
 }
