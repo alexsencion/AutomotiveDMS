@@ -1,4 +1,7 @@
-﻿using System.Threading.RateLimiting;
+﻿using AutomotiveDMS.Application.Interfaces.Services;
+using AutomotiveDMS.Web.Services;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Threading.RateLimiting;
 
 namespace AutomotiveDMS.Web.Extensions
 {
@@ -90,6 +93,8 @@ namespace AutomotiveDMS.Web.Extensions
             });
 
             services.AddHttpContextAccessor();
+
+            services.Replace(ServiceDescriptor.Scoped<ICurrentUserService, HttpContextCurrentUserService>());
 
             return services;
         }

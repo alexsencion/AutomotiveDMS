@@ -9,7 +9,7 @@ namespace AutomotiveDMS.Domain.Entities
     public class AuditLog : BaseEntity
     {
         public string EntityName { get; set; } = string.Empty;
-        public int EntityId { get; set; }
+        public string EntityId { get; set; } = string.Empty;
         public AuditAction Action { get; set; }
         public string? FieldName { get; set; }
         public string? OldValue { get; set; }

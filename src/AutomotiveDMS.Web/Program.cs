@@ -1,4 +1,3 @@
-
 using AutomotiveDMS.Application.Extensions;
 using AutomotiveDMS.Infrastructure.Extensions;
 using AutomotiveDMS.Web.Extensions;
@@ -62,8 +61,6 @@ try
     app.UseAuthentication();
 
     app.UseAuthorization();
-
-    app.UseMiddleware<AuditMiddleware>();
 
     app.MapControllerRoute(
         name: "default",

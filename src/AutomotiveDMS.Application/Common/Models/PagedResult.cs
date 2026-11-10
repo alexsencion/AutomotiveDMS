@@ -4,27 +4,12 @@ using System.Text;
 
 namespace AutomotiveDMS.Application.Common.Models
 {
-    public class PagedResult<T>
+    public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount)
     {
-        public List<T> Items { get; init; } = [];
-        public int TotalCount { get; init; }
-        public int PageNumber { get; init; }
-        public int PageSize { get; init; }
-        public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
-        public bool HasPrevious => PageNumber > 1;
-        public bool HasNext => PageNumber < TotalPages;
+        public int TotalPages => PageSize == 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+        public bool HasPrevious => Page > 1;
+        public bool HasNext => Page < TotalPages;
 
-        public static PagedResult<T> Create(
-            List<T> items,
-            int totalCount,
-            int pageNumber,
-            int pageSize) =>
-            new()
-            {
-                Items = items,
-                TotalCount = totalCount,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            };
+        public static PagedResult<T> Empty(int pageSize) => new([], 1, pageSize, 0);
     }
 }

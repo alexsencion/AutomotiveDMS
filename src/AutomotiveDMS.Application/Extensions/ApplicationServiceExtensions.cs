@@ -28,7 +28,6 @@ namespace AutomotiveDMS.Application.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IFinancingService, FinancingService>();
             services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IAuditService, AuditService>();
 
             return services;
         }

@@ -41,8 +41,10 @@ namespace AutomotiveDMS.Infrastructure.Data.Migrations
                     b.Property<DateTime>("ChangedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("EntityId")
-                        .HasColumnType("int");
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("EntityName")
                         .IsRequired()
@@ -66,6 +68,9 @@ namespace AutomotiveDMS.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(4000)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChangedDate")
+                        .HasDatabaseName("IX_AuditLogs_ChangedDate");
 
                     b.HasIndex("EntityName", "EntityId", "ChangedDate")
                         .HasDatabaseName("IX_AuditLogs_Entity_Date");
