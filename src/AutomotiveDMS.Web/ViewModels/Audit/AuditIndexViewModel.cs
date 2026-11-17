@@ -12,7 +12,7 @@ namespace AutomotiveDMS.Web.ViewModels.Audit
         public string? EntityName { get; set; }
         public string? EntityId { get; set; }
         public string? ChangedBy { get; set; }
-        public AuditAction? ActionType { get; set; }
+        public AuditAction? ActionFilter { get; set; }
         public DateOnly? From { get; set; }
         public DateOnly? To { get; set; }
         public int Page { get; set; } = 1;
@@ -28,7 +28,7 @@ namespace AutomotiveDMS.Web.ViewModels.Audit
             if (!string.IsNullOrWhiteSpace(EntityName)) values["EntityName"] = EntityName;
             if (!string.IsNullOrWhiteSpace(EntityId)) values["EntityId"] = EntityId;
             if (!string.IsNullOrWhiteSpace(ChangedBy)) values["ChangedBy"] = ChangedBy;
-            if (ActionType is { } a) values["ActionType"] = a.ToString();
+            if (ActionFilter is { } a) values["ActionFilter"] = a.ToString();
             if (From is { } f) values["From"] = f.ToString("yyyy-MM-dd");
             if (To is { } t) values["To"] = t.ToString("yyyy-MM-dd");
 

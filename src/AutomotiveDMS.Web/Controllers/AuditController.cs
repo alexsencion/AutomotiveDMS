@@ -31,7 +31,7 @@ namespace AutomotiveDMS.Web.Controllers
         {
             if (model.From is { } f && model.To is { } t && f > t)
             {
-                ModelState.AddModelError(nameof(model.To), "To' must be on or after 'From'.");
+                ModelState.AddModelError(nameof(model.To), "'To' must be on or after 'From'.");
             }
 
             if (ModelState.IsValid)
@@ -40,7 +40,7 @@ namespace AutomotiveDMS.Web.Controllers
                     EntityName: model.EntityName,
                     EntityId: model.EntityId,
                     ChangedBy: model.ChangedBy,
-                    Action: model.ActionType,
+                    Action: model.ActionFilter,
                     FromUtc: model.From is { } from ? DominicanTime.ToUtc(from.ToDateTime(TimeOnly.MinValue)) : null,
                     ToUtcExclusive: model.To is { } to ? DominicanTime.ToUtc(to.AddDays(1).ToDateTime(TimeOnly.MinValue)) : null,
                     Page: model.Page,

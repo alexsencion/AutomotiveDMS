@@ -34,8 +34,8 @@
             </select>
         </div>
         <div class="col-md-2">
-            <label asp-for="ActionType" class="form-label small fw-semibold">Action</label>
-            <select asp-for="ActionType" asp-items="Model.Actions" class="form-select form-select-sm">
+            <label asp-for="ActionFilter" class="form-label small fw-semibold">Action</label>
+            <select asp-for="ActionFilter" asp-items="Model.Actions" class="form-select form-select-sm">
                 <option value="">Any</option>
             </select>
         </div>
@@ -72,7 +72,7 @@
             <tbody>
             @if (Model.Result.TotalCount == 0)
             {
-                <tr><td colspan="7" class="text-center text-muted py-4">No audit entries match theses filters.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4">No audit entries match these filters.</td></tr>
             }
             @foreach (var e in Model.Result.Items)
             {
