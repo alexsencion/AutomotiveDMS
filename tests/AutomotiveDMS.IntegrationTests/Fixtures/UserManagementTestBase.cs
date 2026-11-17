@@ -31,7 +31,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
 
         public Task InitializeAsync() => Task.CompletedTask;
 
-        public Task DisposeAsync() => WithUserManagerAsync(async um =>
+        public virtual Task DisposeAsync() => WithUserManagerAsync(async um =>
         {
             foreach (var email in _createdEmails)
             {
@@ -41,8 +41,6 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
 
             await EnsureAdminIntactAsync(um);
         });
-
-
 
         protected HttpClient CreateClient() =>
             Fixture.CreateClient(new WebApplicationFactoryClientOptions
