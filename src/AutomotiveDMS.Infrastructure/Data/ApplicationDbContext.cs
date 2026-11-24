@@ -34,6 +34,8 @@ namespace AutomotiveDMS.Infrastructure.Data
         public DbSet<Document> Documents { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
 
+        public DbSet<LoginEvent> LoginEvents { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

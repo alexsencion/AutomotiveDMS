@@ -432,6 +432,48 @@ namespace AutomotiveDMS.Infrastructure.Data.Migrations
                     b.ToTable("Guarantors", (string)null);
                 });
 
+            modelBuilder.Entity("AutomotiveDMS.Domain.Entities.LoginEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("IX_LoginEvents_OccurredAt");
+
+                    b.HasIndex("UserId", "OccurredAt")
+                        .HasDatabaseName("IX_LoginEvents_User_Date");
+
+                    b.ToTable("LoginEvents", (string)null);
+                });
+
             modelBuilder.Entity("AutomotiveDMS.Domain.Entities.Payment", b =>
                 {
                     b.Property<int>("Id")

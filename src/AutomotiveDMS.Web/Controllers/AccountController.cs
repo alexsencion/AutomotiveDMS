@@ -1,4 +1,6 @@
 ﻿using AutomotiveDMS.Application.Interfaces.Services;
+using AutomotiveDMS.Application.Security;
+using AutomotiveDMS.Domain.Enums;
 using AutomotiveDMS.Infrastructure.Identity;
 using AutomotiveDMS.Web.Emails;
 using AutomotiveDMS.Web.Extensions;
@@ -20,6 +22,7 @@ namespace AutomotiveDMS.Web.Controllers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly DataProtectionTokenProviderOptions _tokenOptions;
+        private readonly ILoginHistoryService _loginHistory;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
@@ -28,6 +31,7 @@ namespace AutomotiveDMS.Web.Controllers
             IEmailService emailService,
             IConfiguration configuration,
             IOptions<DataProtectionTokenProviderOptions> tokenOptions,
+            ILoginHistoryService loginHistory,
             ILogger<AccountController> logger)
         {
             _signInManager = signInManager;
@@ -35,6 +39,7 @@ namespace AutomotiveDMS.Web.Controllers
             _emailService = emailService;
             _configuration = configuration;
             _tokenOptions = tokenOptions.Value;
+            _loginHistory = loginHistory;
             _logger = logger;
         }
 
@@ -65,7 +70,7 @@ namespace AutomotiveDMS.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model, CancellationToken cancellationToken)
         {
             model.ReturnUrl ??= Url.Content("~/");
 
@@ -74,23 +79,30 @@ namespace AutomotiveDMS.Web.Controllers
                 return View(model);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                userName: model.Email,
-                password: model.Password,
-                isPersistent: model.RememberMe,
-                lockoutOnFailure: true);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            var wasLockedOut = user is not null && await _userManager.IsLockedOutAsync(user);
+
+            var result = user is null
+                ? Microsoft.AspNetCore.Identity.SignInResult.Failed
+                : await _signInManager.PasswordSignInAsync(
+                    user, model.Password, model.RememberMe, lockoutOnFailure: true);
+
+            var eventType = LoginEventClassifier.Classify(new LoginAttemptOutcome(
+                UserFound: user is not null,
+                Succeeded: result.Succeeded,
+                IsLockedOut: result.IsLockedOut,
+                IsNotAllowed: result.IsNotAllowed,
+                WasLockedOutBefore: wasLockedOut));
+
+            await _loginHistory.RecordAsync(eventType, model.Email, user?.Id, cancellationToken);
 
             if (result.Succeeded)
             {
                 _logger.LogInformation(
                     "User '{Email}' logged in successfully", model.Email);
 
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user is not null)
-                {
-                    user.LastLoginDate = DateTime.UtcNow;
-                    await _userManager.UpdateAsync(user);
-                }
+                user!.LastLoginDate = DateTime.UtcNow;
+                await _userManager.UpdateAsync(user);
 
                 if (Url.IsLocalUrl(model.ReturnUrl))
                 {
@@ -106,7 +118,7 @@ namespace AutomotiveDMS.Web.Controllers
                     "User '{Email}' is locked out", model.Email);
 
                 ModelState.AddModelError(string.Empty,
-                    "This user has been locked due to multiple failed login attempts." +
+                    "This user has been locked due to multiple failed login attempts. " +
                     "Please try again in 15 minutes.");
 
                 return View(model);
@@ -367,11 +379,17 @@ namespace AutomotiveDMS.Web.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout(CancellationToken cancellationToken)
         {
-            var email = User.Identity?.Name;
+            var userId = _userManager.GetUserId(User);
+            var email = User.Identity?.Name ?? string.Empty;
 
             await _signInManager.SignOutAsync();
+
+            if (userId is not null)
+            {
+                await _loginHistory.RecordAsync(LoginEventType.LoggedOut, email, userId, cancellationToken);
+            }
 
             _logger.LogInformation(
                 "User '{Email}' logged out", email);

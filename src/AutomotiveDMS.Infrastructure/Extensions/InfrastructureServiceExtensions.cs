@@ -34,6 +34,7 @@ namespace AutomotiveDMS.Infrastructure.Extensions
             services.AddSingleton(new AuditChangeDetector());
             services.AddScoped<AuditSaveChangesInterceptor>();
             services.AddScoped<IAuditService, AuditService>();
+            services.AddScoped<ILoginHistoryService, LoginHistoryService>();
 
             services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {

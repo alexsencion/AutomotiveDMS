@@ -13,5 +13,8 @@ namespace AutomotiveDMS.Web.Services
 
         public string? IpAddress =>
             _accessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        public string? UserAgent =>
+            _accessor.HttpContext?.Request.Headers.UserAgent.ToString() is { Length: > 0 } ua ? ua : null;
     }
 }

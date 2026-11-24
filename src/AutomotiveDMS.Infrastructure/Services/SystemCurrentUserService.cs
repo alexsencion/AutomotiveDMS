@@ -9,5 +9,7 @@ namespace AutomotiveDMS.Infrastructure.Services
     {
         public string? UserId => null;
         public string? IpAddress => null;
+
+        public string? UserAgent => null;
     }
 }
