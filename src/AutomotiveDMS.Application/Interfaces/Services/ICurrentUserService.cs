@@ -8,6 +8,7 @@ namespace AutomotiveDMS.Application.Interfaces.Services
     {
         string? UserId { get; }
         string? IpAddress { get; }
+        string? UserAgent { get; }
     }
 
     public static class CurrentUserDefaults

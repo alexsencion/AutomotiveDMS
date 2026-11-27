@@ -48,6 +48,8 @@
                     <td>@(u.LastLoginLocal?.ToString("dd/MM/yyyy hh:mm tt") ?? "Never")</td>
                     <td class="text-end text-nowrap">
                         <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-controller="LoginHistory" asp-action="Index" asp-route-UserId="@u.Id" 
+                            class="btn btn-sm btn-outline-secondary">History</a>
 
                         @if (u.InvitationPending && u.IsActive)
                         {

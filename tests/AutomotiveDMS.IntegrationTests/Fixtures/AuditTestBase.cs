@@ -38,7 +38,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
             await base.DisposeAsync();
         }
 
-        protected IDisposable ActAs(string userId, string? ip = TestIp)
+        protected IDisposable ActAs(string userId, string? ip = TestIp, string? userAgent = null)
         {
             var accessor = Fixture.Services.GetRequiredService<IHttpContextAccessor>();
 
@@ -49,6 +49,8 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
             };
             if (ip is not null)
                 context.Connection.RemoteIpAddress = IPAddress.Parse(ip);
+            if (userAgent is not null)
+                context.Request.Headers.UserAgent = userAgent;
 
             accessor.HttpContext = context;
             return new ResetOnDispose(() => accessor.HttpContext = null);
@@ -137,6 +139,13 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
         {
             using var scope = Fixture.Services.CreateScope();
             return await action(scope.ServiceProvider.GetRequiredService<TService>());
+        }
+
+        protected async Task WithServiceAsync<TService>(Func<TService, Task> action)
+            where TService : notnull
+        {
+            using var scope = Fixture.Services.CreateScope();
+            await action(scope.ServiceProvider.GetRequiredService<TService>());
         }
     }
 }

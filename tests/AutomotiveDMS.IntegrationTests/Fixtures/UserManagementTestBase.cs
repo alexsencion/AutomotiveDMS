@@ -21,6 +21,7 @@ namespace AutomotiveDMS.IntegrationTests.Fixtures
         protected static readonly string NewPassword = GeneratePassword();
 
         private readonly List<string> _createdEmails = [];
+        protected IReadOnlyList<string> CreatedEmails => _createdEmails;
 
         protected WebAppFixture Fixture { get; }
 

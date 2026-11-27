@@ -25,7 +25,8 @@ namespace AutomotiveDMS.Infrastructure.Data.Interceptors
             typeof(CommunicationLog),
             typeof(VehicleStatusHistory),
             typeof(VehicleZoneHistory),
-            typeof(VehiclePriceHistory)
+            typeof(VehiclePriceHistory),
+            typeof(LoginEvent)
         ];
 
         private static readonly IReadOnlyDictionary<string, string> NoRoles = new Dictionary<string, string>();
@@ -149,8 +150,8 @@ namespace AutomotiveDMS.Infrastructure.Data.Interceptors
                 if (entry.State is EntityState.Detached or EntityState.Unchanged)
                     continue;
 
-                if (entry.Entity is AuditLog && entry.State is EntityState.Modified or EntityState.Deleted)
-                    throw new InvalidOperationException("Audit log entries are immutable and cannot be modified or deleted.");
+                if (entry.Entity is AuditLog or LoginEvent && entry.State is EntityState.Modified or EntityState.Deleted)
+                    throw new InvalidOperationException("Audit log and login history entries are immutable and cannot be modified or deleted.");
 
                 StampAuditFields(entry);
 
